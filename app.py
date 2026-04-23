@@ -107,15 +107,40 @@ def main():
         st.table(sample_cols)
         
         st.markdown("### 📥 下载示例数据")
-        if st.button("生成并下载示例 CSV"):
-            sample_data = generate_sample_data()
-            csv_data = to_csv(sample_data)
+        col1, col2 = st.columns([1, 3])
+        
+        with col1:
+            clean_sample = generate_clean_sample_data()
             st.download_button(
-                label="下载示例数据",
-                data=csv_data,
-                file_name="sample_sales_data.csv",
-                mime="text/csv"
+                label="📥 下载干净示例数据",
+                data=to_csv(clean_sample),
+                file_name="sample_sales_data_clean.csv",
+                mime="text/csv",
+                use_container_width=True,
+                help="推荐：干净的示例数据，可直接用于测试完整功能"
             )
+        
+        with col2:
+            dirty_sample = generate_dirty_sample_data()
+            st.download_button(
+                label="📥 下载带脏数据的示例",
+                data=to_csv(dirty_sample),
+                file_name="sample_sales_data_dirty.csv",
+                mime="text/csv",
+                use_container_width=True,
+                help="可选：包含重复、空值、无效数据，用于测试数据清洗功能"
+            )
+        
+        st.markdown("---")
+        st.markdown("### 💡 使用说明")
+        st.markdown("""
+        1. **推荐**：点击"下载干净示例数据"，然后在左侧上传这个文件
+        2. 或者上传你自己的 CSV 文件（需要包含表格中列出的所有字段）
+        3. 上传成功后，系统会自动进行数据清洗并显示清洗统计
+        4. 使用左侧筛选条件可以按时间、地区、类别、销售人员筛选数据
+        5. 所有图表和指标会根据筛选条件实时更新
+        6. 在数据明细部分可以导出当前筛选结果
+        """)
         return
 
     data_processor = st.session_state.data_processor
@@ -284,10 +309,8 @@ def main():
         st.warning("当前筛选条件下没有数据")
 
 
-def generate_sample_data():
+def _generate_base_sample_data(n_rows: int = 500) -> pd.DataFrame:
     np.random.seed(42)
-    
-    n_rows = 500
     
     regions = ['华东', '华北', '华南', '西南', '西北', '东北']
     categories = ['电子产品', '服装', '家居用品', '食品饮料', '美妆护肤']
@@ -341,12 +364,21 @@ def generate_sample_data():
             '销售人员': salesperson
         })
     
-    df = pd.DataFrame(data)
+    return pd.DataFrame(data)
+
+
+def generate_clean_sample_data() -> pd.DataFrame:
+    return _generate_base_sample_data(n_rows=500)
+
+
+def generate_dirty_sample_data() -> pd.DataFrame:
+    df = _generate_base_sample_data(n_rows=500)
     
     for _ in range(5):
         idx = np.random.randint(0, len(df))
         df.loc[idx, '利润'] = np.nan
     
+    df['销售额'] = df['销售额'].astype(object)
     for _ in range(5):
         idx = np.random.randint(0, len(df))
         df.loc[idx, '销售额'] = '无效数据'

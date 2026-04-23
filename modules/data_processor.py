@@ -9,7 +9,7 @@ class DataProcessor:
     
     def __init__(self):
         self.raw_data = None
-        self.clean_data = None
+        self._cleaned_data = None
         self.cleaning_stats = {}
 
     def load_data(self, file_path) -> Tuple[bool, str]:
@@ -74,8 +74,8 @@ class DataProcessor:
         df['月份'] = df['订单日期'].dt.month
         df['年月'] = df['订单日期'].dt.to_period('M')
 
-        self.clean_data = df.reset_index(drop=True)
-        self.cleaning_stats['final_count'] = len(self.clean_data)
+        self._cleaned_data = df.reset_index(drop=True)
+        self.cleaning_stats['final_count'] = len(self._cleaned_data)
 
         return {
             'success': True,
@@ -90,10 +90,10 @@ class DataProcessor:
         categories: list = None,
         salespeople: list = None
     ) -> pd.DataFrame:
-        if self.clean_data is None:
+        if self._cleaned_data is None:
             return pd.DataFrame()
 
-        df = self.clean_data.copy()
+        df = self._cleaned_data.copy()
 
         if date_range:
             start_date, end_date = date_range
@@ -111,14 +111,14 @@ class DataProcessor:
         return df
 
     def get_unique_values(self) -> Dict[str, list]:
-        if self.clean_data is None:
+        if self._cleaned_data is None:
             return {}
 
         return {
-            'regions': sorted(self.clean_data['地区'].unique().tolist()),
-            'categories': sorted(self.clean_data['类别'].unique().tolist()),
-            'salespeople': sorted(self.clean_data['销售人员'].unique().tolist()),
-            'date_range': (self.clean_data['订单日期'].min(), self.clean_data['订单日期'].max())
+            'regions': sorted(self._cleaned_data['地区'].unique().tolist()),
+            'categories': sorted(self._cleaned_data['类别'].unique().tolist()),
+            'salespeople': sorted(self._cleaned_data['销售人员'].unique().tolist()),
+            'date_range': (self._cleaned_data['订单日期'].min(), self._cleaned_data['订单日期'].max())
         }
 
     def calculate_metrics(self, df: pd.DataFrame) -> Dict[str, Any]:
